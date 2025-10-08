@@ -266,7 +266,7 @@ export default function AlertsPage() {
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Percentage:</span>
                         <span className={`font-medium ${selectedCustomer.percentageOfThreshold > 100 ? 'text-destructive' : 'text-success'}`}>
-                          {selectedCustomer.percentageOfThreshold}%
+                          {selectedCustomer.threshold}%
                         </span>
                       </div>
                     </div>
@@ -408,26 +408,18 @@ function AlertCard({ alert, onClick }: { alert: AlertData; onClick: () => void }
               <p className="text-sm text-foreground">{alert.message}</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <span className="font-medium">Metric:</span>
-                  <span>{alert.metricName}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">Current:</span>
-                  <span>{alert.currentValue.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">Threshold:</span>
-                  <span>{alert.threshold.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   <span>{formatTime(alert.triggeredAt)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">Metric:</span>
+                  <span>{alert.metricName}</span>
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-foreground">{alert.percentageOfThreshold}%</div>
-              <div className="text-xs text-muted-foreground">of threshold</div>
+              <div className="text-2xl font-bold text-foreground">{alert.threshold}%</div>
+              <div className="text-xs text-muted-foreground">remaining</div>
             </div>
           </div>
         </CardContent>

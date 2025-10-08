@@ -31,6 +31,17 @@ export interface MetronomeCustomer {
   external_id?: string
   created_at: string
   updated_at: string
+  ingest_aliases?: string[]
+  customer_config?: {
+    salesforce_account_id?: string
+  }
+  custom_fields?: {
+    [key: string]: string
+  }
+}
+
+export interface MetronomeCustomerResponse {
+  data: MetronomeCustomer
 }
 
 export interface MetronomeCustomersResponse {
@@ -126,6 +137,18 @@ class MetronomeAPI {
   }
 
   /**
+   * Get a specific customer by ID
+   * @param customerId - The Metronome customer ID
+   */
+  async getCustomer(customerId: string): Promise<MetronomeCustomer> {
+    console.log(`Fetching customer details for ID: ${customerId}`)
+    const response = await this.makeRequest<MetronomeCustomerResponse>(`/customers/${customerId}`, {
+      method: 'GET',
+    })
+    return response.data
+  }
+
+  /**
    * Get all customers (for populating customer list)
    * @param nextPage - Optional pagination cursor
    */
@@ -161,28 +184,36 @@ class MetronomeAPI {
   }
 
   /**
-   * Get all threshold notifications for a specific customer
-   * This calls the customer-alerts/list endpoint directly with a specific customer ID
+   * Get all threshold notifications for a specific customer with customer details
+   * This calls the customer-alerts/list endpoint and fetches customer information
    */
-  async getAllAlerts(customerId?: string): Promise<MetronomeCustomerAlert[]> {
+  async getAllAlerts(customerId?: string): Promise<{ alerts: MetronomeCustomerAlert[], customer: MetronomeCustomer }> {
     try {
       // Use the specific customer ID provided, or fall back to the hardcoded one
       const targetCustomerId = customerId || '72207a5b-5fa2-4e0f-8cfc-d5420bf4dd8b'
       
-      console.log(`Fetching alerts for specific customer: ${targetCustomerId}`)
+      console.log(`Fetching alerts and customer details for: ${targetCustomerId}`)
       
-      // Call the customer-alerts/list endpoint directly with the specific customer ID
-      const response = await this.makeRequest<MetronomeAlertsResponse>('/customer-alerts/list', {
-        method: 'POST',
-        body: JSON.stringify({
-          customer_id: targetCustomerId
-        })
-      })
+      // Fetch both alerts and customer details in parallel
+      const [alertsResponse, customerResponse] = await Promise.all([
+        this.makeRequest<MetronomeAlertsResponse>('/customer-alerts/list', {
+          method: 'POST',
+          body: JSON.stringify({
+            customer_id: targetCustomerId
+          })
+        }),
+        this.getCustomer(targetCustomerId)
+      ])
       
-      console.log('Customer alerts response:', response)
-      return response.data
+      console.log('Customer alerts response:', alertsResponse.data.length, 'alerts')
+      console.log('Customer details:', customerResponse.name)
+      
+      return {
+        alerts: alertsResponse.data,
+        customer: customerResponse
+      }
     } catch (error) {
-      console.error('Failed to fetch alerts for customer:', error)
+      console.error('Failed to fetch alerts and customer details:', error)
       throw error
     }
   }
@@ -194,8 +225,7 @@ export const metronomeAPI = new MetronomeAPI()
 // Helper function to transform Metronome data to our internal format
 export function transformMetronomeAlert(
   customerAlert: MetronomeCustomerAlert,
-  customerId: string = '72207a5b-5fa2-4e0f-8cfc-d5420bf4dd8b',
-  customerName?: string
+  customer: MetronomeCustomer
 ): {
   id: string
   customerId: string
@@ -236,8 +266,8 @@ export function transformMetronomeAlert(
 
   return {
     id: alert.id,
-    customerId: customerId,
-    customerName: customerName || `Customer ${customerId.slice(0, 8)}`,
+    customerId: customer.id,
+    customerName: customer.name,
     alertType: alert.type,
     threshold: alert.threshold,
     currentValue,
