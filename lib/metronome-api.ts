@@ -161,42 +161,28 @@ class MetronomeAPI {
   }
 
   /**
-   * Get all threshold notifications across all customers
-   * This calls the customer-alerts/list endpoint directly
+   * Get all threshold notifications for a specific customer
+   * This calls the customer-alerts/list endpoint directly with a specific customer ID
    */
-  async getAllAlerts(): Promise<MetronomeCustomerAlert[]> {
+  async getAllAlerts(customerId?: string): Promise<MetronomeCustomerAlert[]> {
     try {
-      console.log('Fetching all customer alerts from Metronome API...')
+      // Use the specific customer ID provided, or fall back to the hardcoded one
+      const targetCustomerId = customerId || '72207a5b-5fa2-4e0f-8cfc-d5420bf4dd8b'
       
-      // First, we need to get customers to get their IDs
-      console.log('First fetching customers...')
-      const customersResponse = await this.getCustomers()
-      console.log('Customers response:', customersResponse)
-      const customers = customersResponse.data
-
-      if (customers.length === 0) {
-        console.log('No customers found, returning empty alerts array')
-        return []
-      }
-
-      // Get alerts for each customer
-      const allAlerts: MetronomeCustomerAlert[] = []
+      console.log(`Fetching alerts for specific customer: ${targetCustomerId}`)
       
-      for (const customer of customers) {
-        try {
-          console.log(`Fetching alerts for customer: ${customer.id} (${customer.name})`)
-          const alertsResponse = await this.getCustomerAlerts(customer.id)
-          console.log(`Alerts for ${customer.name}:`, alertsResponse.data)
-          allAlerts.push(...alertsResponse.data)
-        } catch (error) {
-          console.warn(`Failed to fetch alerts for customer ${customer.id}:`, error)
-          // Continue with other customers even if one fails
-        }
-      }
-
-      return allAlerts
+      // Call the customer-alerts/list endpoint directly with the specific customer ID
+      const response = await this.makeRequest<MetronomeAlertsResponse>('/customer-alerts/list', {
+        method: 'POST',
+        body: JSON.stringify({
+          customer_id: targetCustomerId
+        })
+      })
+      
+      console.log('Customer alerts response:', response)
+      return response.data
     } catch (error) {
-      console.error('Failed to fetch all alerts:', error)
+      console.error('Failed to fetch alerts for customer:', error)
       throw error
     }
   }
@@ -208,6 +194,7 @@ export const metronomeAPI = new MetronomeAPI()
 // Helper function to transform Metronome data to our internal format
 export function transformMetronomeAlert(
   customerAlert: MetronomeCustomerAlert,
+  customerId: string = '72207a5b-5fa2-4e0f-8cfc-d5420bf4dd8b',
   customerName?: string
 ): {
   id: string
@@ -249,8 +236,8 @@ export function transformMetronomeAlert(
 
   return {
     id: alert.id,
-    customerId: 'unknown', // We'd need to map this from the customer data
-    customerName: customerName || 'Unknown Customer',
+    customerId: customerId,
+    customerName: customerName || `Customer ${customerId.slice(0, 8)}`,
     alertType: alert.type,
     threshold: alert.threshold,
     currentValue,

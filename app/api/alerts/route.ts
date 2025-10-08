@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Metronome API token found, attempting to fetch real data...')
-    // Fetch real data from Metronome API
+    // Fetch real data from Metronome API for specific customer
     const metronomeAlerts = await metronomeAPI.getAllAlerts()
     console.log('Received alerts from Metronome:', metronomeAlerts.length)
     
     const transformedAlerts = metronomeAlerts.map(alert => 
-      transformMetronomeAlert(alert)
+      transformMetronomeAlert(alert, '72207a5b-5fa2-4e0f-8cfc-d5420bf4dd8b')
     )
 
     return NextResponse.json({
