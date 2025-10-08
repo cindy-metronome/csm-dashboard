@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Clock, AlertTriangle, AlertCircle, Info, RefreshCw } from "lucide-react"
-import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Bell, Clock, AlertTriangle, AlertCircle, Info, RefreshCw, User, X, TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react"
 import { useEffect, useState } from "react"
 // Removed direct Metronome API import - now using API route
 
@@ -25,6 +25,7 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<AlertData | null>(null)
 
   const fetchAlerts = async () => {
     try {
@@ -193,15 +194,152 @@ export default function AlertsPage() {
           </Card>
         ) : (
           sortedAlerts.map((alert) => (
-            <AlertCard key={alert.id} alert={alert} />
+            <AlertCard 
+              key={alert.id} 
+              alert={alert} 
+              onClick={() => setSelectedCustomer(alert)}
+            />
           ))
         )}
       </div>
+
+      {/* Customer 360 Modal */}
+      {selectedCustomer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div className="flex items-center gap-3">
+                <User className="h-6 w-6 text-primary" />
+                <div>
+                  <CardTitle className="text-2xl">{selectedCustomer.customerName}</CardTitle>
+                  <p className="text-muted-foreground">Customer ID: {selectedCustomer.customerId}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedCustomer(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Alert Summary */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Current Alert</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={selectedCustomer.severity === 'critical' ? 'destructive' : selectedCustomer.severity === 'warning' ? 'default' : 'secondary'}>
+                          {selectedCustomer.severity}
+                        </Badge>
+                        <span className="text-sm font-medium">{selectedCustomer.alertType.replace(/_/g, ' ')}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{selectedCustomer.message}</p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{new Date(selectedCustomer.triggeredAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Threshold Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Current Value:</span>
+                        <span className="font-medium">{selectedCustomer.currentValue.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Threshold:</span>
+                        <span className="font-medium">{selectedCustomer.threshold.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Percentage:</span>
+                        <span className={`font-medium ${selectedCustomer.percentageOfThreshold > 100 ? 'text-destructive' : 'text-success'}`}>
+                          {selectedCustomer.percentageOfThreshold}%
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Customer Metrics */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Customer Metrics</h3>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Metric Type</p>
+                          <p className="text-2xl font-bold">{selectedCustomer.metricName}</p>
+                        </div>
+                        <DollarSign className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Alert Status</p>
+                          <p className="text-2xl font-bold capitalize">{selectedCustomer.severity}</p>
+                        </div>
+                        <AlertTriangle className="h-8 w-8 text-destructive" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                          <p className="text-2xl font-bold">{new Date(selectedCustomer.triggeredAt).toLocaleDateString()}</p>
+                        </div>
+                        <Calendar className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button className="flex-1">
+                  <User className="h-4 w-4 mr-2" />
+                  View Full Profile
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  View Usage Trends
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Billing Details
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
 
-function AlertCard({ alert }: { alert: AlertData }) {
+function AlertCard({ alert, onClick }: { alert: AlertData; onClick: () => void }) {
   const getSeverityColor = () => {
     switch (alert.severity) {
       case "critical":
@@ -251,8 +389,10 @@ function AlertCard({ alert }: { alert: AlertData }) {
   }
 
   return (
-    <Link href={`/dashboard/customer-360?id=${alert.customerId}`}>
-      <Card className={`transition-colors hover:bg-accent/50 cursor-pointer ${getSeverityBg()}`}>
+    <Card 
+      className={`transition-colors hover:bg-accent/50 cursor-pointer ${getSeverityBg()}`}
+      onClick={onClick}
+    >
         <CardContent className="pt-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
@@ -292,6 +432,5 @@ function AlertCard({ alert }: { alert: AlertData }) {
           </div>
         </CardContent>
       </Card>
-    </Link>
   )
 }

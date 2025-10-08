@@ -3,28 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, User, TrendingUp, Bell } from "lucide-react"
+import { Bell } from "lucide-react"
 
 const navItems = [
-  {
-    title: "My Book of Business",
-    href: "/dashboard/book-of-business",
-    icon: LayoutDashboard,
-  },
   {
     title: "Alerts",
     href: "/dashboard/alerts",
     icon: Bell,
-  },
-  {
-    title: "Customer 360",
-    href: "/dashboard/customer-360",
-    icon: User,
-  },
-  {
-    title: "Finding Growth",
-    href: "/dashboard/growth",
-    icon: TrendingUp,
   },
 ]
 
