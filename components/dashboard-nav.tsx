@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Bell } from "lucide-react"
+import { LocaleSelector } from "gt-next"
 
 const navItems = [
   {
@@ -50,6 +51,7 @@ export function DashboardNav() {
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <LocaleSelector />
             <div className="text-sm text-muted-foreground">
               CSM: <span className="text-foreground font-medium">Sarah Johnson</span>
             </div>
