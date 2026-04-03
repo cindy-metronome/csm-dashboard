@@ -2,7 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { getLocale } from "gt-next/server";
+import { getLocale, getGT } from "gt-next/server";
 import { GTProvider } from "gt-next";
 
 const geistSans = Geist({
@@ -15,11 +15,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"]
 });
 
-export const metadata: Metadata = {
-  title: "CSM Dashboard",
-  description: "Customer Success Management Dashboard powered by Metronome",
-  generator: 'v0.app'
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const gt = await getGT();
+  return {
+    title: gt("CSM Dashboard"),
+    description: gt("Customer Success Management Dashboard powered by Metronome"),
+    generator: 'v0.app'
+  };
+}
 
 export default async function RootLayout({
   children
